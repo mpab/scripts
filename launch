@@ -14,6 +14,10 @@ echo file extension $extension
 
 PF86COMMON="C:\\Program Files (x86)\\Common Files"
 
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 function launch_app {
     echo launching $app $filepath
     "$app" "$filepath"
