@@ -1,0 +1,74 @@
+#!/bin/bash
+
+RED='\033[0;41m'
+GREEN='\033[0;42m'
+NC='\033[0m' # No Color
+PASSED="${GREEN}PASSED${NC}"
+FAILED="${RED}FAILED${NC}"
+
+echo "validating all *.csproj files in all subfolders..."
+echo
+
+projects=$(find . -name *.csproj)
+
+[ -z $projects ] && echo "no *.csproj files found!" && exit
+
+echo "checking for duplicate project GUIDs"
+dupes=$(cat $projects | grep ProjectGuid | sed -e 's/^[ \t]*//' | sort | uniq -d)
+
+if [ -z "$dupes" ];then
+    echo -e $PASSED
+else
+    echo -e $FAILED
+    echo $dupes
+fi
+
+echo
+
+echo "checking for consistent project file names, namespaces and assembly names"
+echo
+
+for project_file in $projects; do
+    project_folder=$(echo $project_file | sed 's|\(.*\)/.*|\1|')
+    
+    echo checking project folder $project_folder
+
+    project_filename_namespace=$(echo $project_file | sed -e 's/\.[^\.]*$//' | sed 's|.*/||')
+    [[ -z  $project_filename_namespace ]] && echo -e "${RED}ERROR: empty project_filename_namespace${NC}"
+
+    project_file_rootnamespace=$(cat $project_file | grep RootNamespace | sed -e 's/<[^>]*>//g' )
+    [[ -z  $project_file_rootnamespace ]] && echo -e "${RED}ERROR: empty project_file_rootnamespace${NC}"
+
+    project_file_assemblyname=$(cat $project_file | grep AssemblyName | sed -e 's/<[^>]*>//g')
+    [[ -z  $project_file_assemblyname ]] && echo -e "${RED}ERROR: empty project_file_assemblyname${NC}"
+
+    if [ $project_filename_namespace != $project_file_rootnamespace ] || [ $project_file_rootnamespace != $project_file_assemblyname ]; then
+        echo -e $FAILED
+        echo "project_filename_namespace $project_filename_namespace"
+        echo "project_file_rootnamespace $project_file_rootnamespace"
+        echo "project_file_assemblyname $project_file_assemblyname"
+        echo
+        continue
+    fi
+
+    assembly_file=$project_folder/Properties/AssemblyInfo.cs
+
+    assembly_file_title=$(cat $assembly_file | grep AssemblyTitle | sed 's/.*"\(.*\)"[^"]*$/\1/')
+    [[ -z  $assembly_file_title ]] && echo -e "${RED}ERROR: empty assembly_file_title${NC}"
+
+    assembly_file_product=$(cat $assembly_file | grep AssemblyProduct | sed 's/.*"\(.*\)"[^"]*$/\1/')
+    [[ -z  $assembly_file_product ]] && echo -e "${RED}ERROR: empty assembly_file_product${NC}"
+
+    if [ $project_file_assemblyname != $assembly_file_title ] || [ $assembly_file_title != $assembly_file_product ]; then
+        echo -e $FAILED
+        echo "project_file_assemblyname $project_file_assemblyname"
+        echo "assembly_file_title $assembly_file_title"
+        echo "assembly_file_product $assembly_file_product"
+        echo
+        continue
+    fi
+
+    echo -e $PASSED
+    echo
+
+done
