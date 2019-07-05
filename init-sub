@@ -1,0 +1,16 @@
+#!/bin/bash
+#git config --file .gitmodules --get-regexp branch
+#git config --file .gitmodules --get-regexp path
+
+submods=($(git config --file .gitmodules --get-regexp path | awk '{ print $2 }'))
+branches=($(git config --file .gitmodules --get-regexp branch | awk '{ print $2 }'))
+
+for i in ${!submods[@]}
+do
+  echo processing submodule: ${submods[$i]} branch: ${branches[$i]}
+  pushd ${submods[$i]}
+  git submodule init
+  git submodule update
+  git checkout ${branches[$i]}
+  popd
+done

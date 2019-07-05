@@ -1,0 +1,19 @@
+#!/bin/bash
+
+[ -z "$repo_name" ] && echo "ERROR! repo_name is not set!" && return 1
+[ -z "$repo_url" ] && echo "ERROR! repo_url is not set!" && return 1
+[ -z "$repo_branch" ] && echo "ERROR! repo_branch is not set!" && return 1
+
+if [ -d $repo_name ]; then
+    echo "removing $repo_name"
+    rm -rf $repo_name
+
+    if [ -d $repo_name ]; then
+        echo "ERROR: Cannot remove folder $repo_name, cannot clone"
+        return 1
+    fi
+fi
+
+git clone --single-branch --branch $repo_branch $repo_url/$repo_name
+cd $repo_name
+. init-sub
