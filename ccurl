@@ -1,3 +1,5 @@
 #!/bin/bash
-/usr/local/opt/curl/bin/curl --cacert ~/certs/localhost.cer $*
+#/usr/local/opt/curl/bin/curl --cacert ~/certs/localhost.cer $*
+
+curl -k $*
 echo
