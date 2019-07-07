@@ -1,5 +1,30 @@
 #!/bin/bash
-filepath=$(realpath $1)
+
+function my_realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
+function launch_app {
+    echo launching $app $filepath
+    $app $filepath
+}
+
+function set_app_vs {
+    app="$PF86COMMON\\Microsoft Shared\\MSEnv\\VSLauncher.exe"
+    if [ -e "$app" ]; then
+        echo Windows...  
+        return
+    fi
+
+    app="/Applications/Visual Studio.app"
+    if [ -d "$app" ]; then
+        app="open -a $app"
+        echo macOS...
+        return
+    fi
+}
+
+filepath=$(my_realpath $1)
 
 if [ ! -f "$filepath" ]; then
     echo "ERROR: $filepath not found"
@@ -8,24 +33,11 @@ fi
 
 extension="${filepath##*.}"
 name="${filepath%.*}"
-echo full name and path $filepath
-echo file name $name
-echo file extension $extension
+#echo full name and path $filepath
+#echo file name $name
+#echo file extension $extension
 
 PF86COMMON="C:\\Program Files (x86)\\Common Files"
-
-realpath() {
-    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
-}
-
-function launch_app {
-    echo launching $app $filepath
-    "$app" "$filepath"
-}
-
-function set_app_vs {
-    app="$PF86COMMON\\Microsoft Shared\\MSEnv\\VSLauncher.exe"
-}
 
 case $extension in
     sln)
