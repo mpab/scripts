@@ -8,7 +8,7 @@ export PATH="/usr/local/opt/bison/bin:$PATH"
 export PATH="$PATH:$HOME/scripts:./scripts"
 
 # useful aliases
-. ~/scripts/bash_aliases
+. bash_aliases
 
 # prompt
 export CLICOLOR=1
