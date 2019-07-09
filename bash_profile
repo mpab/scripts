@@ -17,7 +17,8 @@ export LSCOLORS=ExFxBxDxCxegedabagacad
 
 # set go path if go present
 if [ $(command -v go) ]; then
-    export GOPATH="$HOME/go"
+    # hack for go installed on a windows path accessed by git bash
+    export GOPATH=$(echo "$HOME/go" | sed -e 's/\\/\//g' -e 's/://')
     export PATH="$PATH:$GOPATH/bin"
     mkdir -p $GOPATH
-fi;
+fi
