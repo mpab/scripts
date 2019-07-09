@@ -14,3 +14,10 @@ export PATH="$PATH:$HOME/scripts:./scripts"
 export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
 #. bash_ps1
+
+# set go path if go present
+if [ $(command -v go) ]; then
+    export GOPATH="$HOME/go"
+    export PATH="$PATH:$GOPATH/bin"
+    mkdir -p $GOPATH
+fi;
