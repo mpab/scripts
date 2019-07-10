@@ -11,7 +11,7 @@ echo
 
 projects=$(find . -name *.csproj)
 
-[ -z $projects ] && echo "no *.csproj files found!" && exit
+[[ -z $projects ]] && echo "no *.csproj files found!" && exit
 
 echo "checking for duplicate project GUIDs"
 dupes=$(cat $projects | grep ProjectGuid | sed -e 's/^[ \t]*//' | sort | uniq -d)
