@@ -1,2 +1,0 @@
-#!/bin/bash
-find . -name "obj" -o -name "bin" -type d -exec rm -rf {} +

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo removing obj folders
+find . -name "obj" -type d -exec rm -rf {} +
+
+echo removing bin folders
+find . -name "bin" -type d -exec rm -rf {} +
+
+echo removing *.csproj.user files
+find . -name "*.csproj.user" -type f -exec rm -rf {} +
