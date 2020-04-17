@@ -1,0 +1,1 @@
+python %APPS%\scripts\get-pip.py
