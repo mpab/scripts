@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $(uname -s | grep -i cygwin) ]; then
+    export cdrive=/cygdrive/c
+    export ddrive=/cygdrive/d
+    export edrive=/cygdrive/e
+else
+    export cdrive=/c
+    export ddrive=/d
+    export ddrive=/e
+fi
