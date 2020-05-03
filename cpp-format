@@ -1,0 +1,19 @@
+#!/bin/sh
+
+formatcpp() {
+
+  for file in $(find . -name *.cpp); do
+    echo $file
+    clang-format -i style=$FMT $file
+  done
+
+  for file in $(find . -name *.hpp); do
+    echo $file
+    clang-format -i style=$FMT $file
+  done
+
+}
+
+export FMT=LLVM
+formatcpp
+
