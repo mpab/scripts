@@ -1,0 +1,116 @@
+#!/bin/sh
+
+set -e
+
+function create_web_site_script() {
+
+    if [ "$app_web_name" == "ui" ]; then
+        export webapp_sub_domain=$solution_environment-$solution_name
+    else
+        export webapp_sub_domain=$solution_environment-$app_web_name-$solution_name
+    fi
+
+    export webapp_site_name=$solution_environment-$solution_name-$app_web_name-$solution_domain
+    export webapp_host_name=$webapp_sub_domain.$solution_domain
+    export webapp_physical_path=$solution_iis_physical_path_root/$app_vs_project_name
+    export webapp_physical_path_dos=$solution_iis_physical_path_root_dos\\$app_vs_project_name
+
+    export webapp_site_bindings=$webapp_host_name
+
+    echo $app_cmd delete site $webapp_site_name >> $iis_setup_script
+    echo $app_cmd delete apppool $webapp_site_name >> $iis_setup_script
+
+    echo $app_cmd add apppool /name:"$webapp_site_name" /managedRuntimeVersion:"" -processModel.identityType:LocalSystem >> $iis_setup_script
+    echo $app_cmd add site /name:"$webapp_site_name" /site.name:"$webapp_site_name" /bindings:"http://$webapp_site_bindings:80" /physicalPath:"$webapp_physical_path_dos" >> $iis_setup_script
+    echo $app_cmd set app "$webapp_site_name/" /applicationPool:"$webapp_site_name" >> $iis_setup_script
+    echo $app_cmd start apppool /apppool.name:"$webapp_site_name" >> $iis_setup_script
+    echo '' >> $iis_setup_script
+}
+
+function create_hosts_section() {
+
+    export info="$solution_name, $solution_environment, $app_web_name"
+
+    echo "# $info" >> $hosts_file
+
+    echo "# Site name:        $webapp_site_name" >> $hosts_file
+    echo "# Application pool: $webapp_site_name" >> $hosts_file
+    echo "# Physical path:    $webapp_physical_path" >> $hosts_file
+    echo "127.0.0.1           $webapp_host_name" >> $hosts_file
+
+    echo '' >> $hosts_file
+}
+
+function create_deployment_script() {
+
+    if ! [ -e $iis_deploy_script ]; then
+        echo "#!/bin/sh" >> $iis_deploy_script
+        echo '' >> $iis_deploy_script
+        echo "set -e" >> $iis_deploy_script
+        echo '' >> $iis_deploy_script
+    fi
+
+    artifacts_folder=bin/Debug/netcoreapp3.1/publish
+
+    echo "pushd $app_vs_project_name" >> $iis_deploy_script
+    echo "dotnet publish" >> $iis_deploy_script
+    echo "mkdir -p $webapp_physical_path" >> $iis_deploy_script
+    echo "rm -rf $webapp_physical_path/*" >> $iis_deploy_script
+    echo "cp -R $artifacts_folder/* $webapp_physical_path" >> $iis_deploy_script
+    echo "popd" >> $iis_deploy_script
+
+    echo '' >> $iis_deploy_script
+}
+
+if [ -z "$iis_setup_script" ]; then
+    echo $0 ERROR: iis_setup_script not set
+    exit 1
+fi
+
+if [ -z "$hosts_file" ]; then
+    echo $0 ERROR: hosts_file not set
+    exit 1
+fi
+
+if [ -z "$iis_deploy_script" ]; then
+    echo $0 ERROR: iis_deploy_script not set
+    exit 1
+fi
+
+if [ -z "$solution_name" ]; then
+    echo $0 ERROR: solution_name not set
+    exit 1
+fi
+
+if [ -z "$solution_domain" ]; then
+    echo $0 ERROR: solution_domain not set
+    exit 1
+fi
+
+if [ -z "$solution_environment" ]; then
+    echo $0 ERROR: solution_environment not set
+    exit 1
+fi
+
+if [ -z "$solution_iis_physical_path_root" ]; then
+    echo $0 ERROR: solution_iis_physical_path_root not set
+    exit 1
+fi
+
+if [ -z "$app_web_name" ]; then
+    echo $0 ERROR: app_web_name not set
+    exit 1
+fi
+
+if [ -z "$app_vs_project_name" ]; then
+    echo $0 ERROR: app_vs_project_name not set
+    exit 1
+fi
+
+export app_cmd=$WINDIR\\system32\\inetsrv\\appcmd.exe
+
+create_web_site_script
+create_deployment_script
+create_hosts_section
+
+
