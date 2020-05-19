@@ -4,7 +4,17 @@ set -e
 
 function create_web_site_script() {
 
-    if [ "$app_web_name" == "ui" ]; then
+    if [ -z "$solution_env_host_ip" ]; then
+        export solution_env_host_ip="127.0.0.1"
+        echo $app_vs_project_name: solution_env_host_ip not set, using $solution_env_host_ip
+    fi
+
+    if [ -z "$solution_env_apppool_identity" ]; then
+        export solution_env_apppool_identity="LocalSystem"
+        echo $app_vs_project_name: solution_env_apppool_identity not set, using $solution_env_apppool_identity
+    fi
+
+    if [ "$app_web_name" == "Ui" ]; then
         export webapp_sub_domain=$solution_environment-$solution_name
     else
         export webapp_sub_domain=$solution_environment-$app_web_name-$solution_name
@@ -20,8 +30,9 @@ function create_web_site_script() {
     echo $app_cmd delete site $webapp_site_name >> $iis_setup_script
     echo $app_cmd delete apppool $webapp_site_name >> $iis_setup_script
 
-    echo $app_cmd add apppool /name:"$webapp_site_name" /managedRuntimeVersion:"" -processModel.identityType:LocalSystem >> $iis_setup_script
+    echo $app_cmd add apppool /name:"$webapp_site_name" /managedRuntimeVersion:"" -processModel.identityType:$solution_env_apppool_identity >> $iis_setup_script
     echo $app_cmd add site /name:"$webapp_site_name" /site.name:"$webapp_site_name" /bindings:"http://$webapp_site_bindings:80" /physicalPath:"$webapp_physical_path_dos" >> $iis_setup_script
+    # echo $app_cmd add site /name:"$webapp_site_name" /site.name:"$webapp_site_name" /+bindings.[protocol="https",bindinginformation="*443$webapp_site_bindings"] >> $iis_setup_script
     echo $app_cmd set app "$webapp_site_name/" /applicationPool:"$webapp_site_name" >> $iis_setup_script
     echo $app_cmd start apppool /apppool.name:"$webapp_site_name" >> $iis_setup_script
     echo '' >> $iis_setup_script
@@ -36,7 +47,7 @@ function create_hosts_section() {
     echo "# Site name:        $webapp_site_name" >> $hosts_file
     echo "# Application pool: $webapp_site_name" >> $hosts_file
     echo "# Physical path:    $webapp_physical_path" >> $hosts_file
-    echo "127.0.0.1           $webapp_host_name" >> $hosts_file
+    echo "$solution_env_host_ip $webapp_host_name" >> $hosts_file
 
     echo '' >> $hosts_file
 }
