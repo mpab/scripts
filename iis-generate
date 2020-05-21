@@ -14,13 +14,13 @@ function create_web_site_script() {
         echo $app_vs_project_name: solution_env_apppool_identity not set, using $solution_env_apppool_identity
     fi
 
-    if [ "$app_web_name" == "Ui" ]; then
-        export webapp_sub_domain=$solution_environment-$solution_name
+    if [ "$application_type" == "Ui" ]; then
+        export webapp_sub_domain=$solution_environment-$application_name
     else
-        export webapp_sub_domain=$solution_environment-$app_web_name-$solution_name
+        export webapp_sub_domain=$solution_environment-$application_type-$application_name
     fi
 
-    export webapp_site_name=$solution_environment-$solution_name-$app_web_name-$solution_domain
+    export webapp_site_name=$solution_environment-$application_name-$application_type.$solution_domain
     export webapp_host_name=$webapp_sub_domain.$solution_domain
     export webapp_physical_path=$solution_iis_physical_path_root/$app_vs_project_name
     export webapp_physical_path_dos=$solution_iis_physical_path_root_dos\\$app_vs_project_name
@@ -40,7 +40,7 @@ function create_web_site_script() {
 
 function create_hosts_section() {
 
-    export info="$solution_name, $solution_environment, $app_web_name"
+    export info="$application_name, $solution_environment, $application_type"
 
     echo "# $info" >> $hosts_file
 
@@ -73,6 +73,34 @@ function create_deployment_script() {
     echo '' >> $iis_deploy_script
 }
 
+# Entry point
+
+if [ -z "$1" ]; then
+    echo USAGE: $0 solution_folder application_name application_type - Api/Ui
+    echo $0 ERROR: solution_folder not set
+    exit 1
+fi
+
+if [ -z "$2" ]; then
+    echo USAGE: $0 solution_folder application_name application_type - Api/Ui
+    echo $0 ERROR: application_name not set
+    exit 1
+fi
+
+if [ -z "$3" ]; then
+    echo USAGE: $0 solution_folder application_name application_type - Api/Ui
+    echo $0 ERROR: application_type not set
+    exit 1
+fi
+
+export solution_folder=$1
+export application_name=$2
+export application_type=$3
+
+export app_vs_project_name=$application_name$application_type
+export solution_iis_physical_path_root_dos=$SYSTEMDRIVE\\inetpub\\$solution_environment-$solution_folder-$solution_domain
+export solution_iis_physical_path_root=/C/inetpub/$solution_environment-$solution_folder-$solution_domain
+
 if [ -z "$iis_setup_script" ]; then
     echo $0 ERROR: iis_setup_script not set
     exit 1
@@ -88,8 +116,8 @@ if [ -z "$iis_deploy_script" ]; then
     exit 1
 fi
 
-if [ -z "$solution_name" ]; then
-    echo $0 ERROR: solution_name not set
+if [ -z "$application_name" ]; then
+    echo $0 ERROR: application_name not set
     exit 1
 fi
 
@@ -108,8 +136,8 @@ if [ -z "$solution_iis_physical_path_root" ]; then
     exit 1
 fi
 
-if [ -z "$app_web_name" ]; then
-    echo $0 ERROR: app_web_name not set
+if [ -z "$application_type" ]; then
+    echo $0 ERROR: application_type not set
     exit 1
 fi
 
