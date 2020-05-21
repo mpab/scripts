@@ -1,12 +1,22 @@
 #!/bin/sh
 
+# TODO
+# generate appsettings files for proxies
+# adjust production website urls (perhaps)
+
 set -e
 
 function create_web_site_script() {
 
+    if ! [ -e $iis_setup_script ]; then
+        echo "- creating iis site setup script: $iis_setup_script"
+    else
+        echo "- appending to iis site setup script: $iis_setup_script"
+    fi
+
     if [ -z "$solution_env_host_ip" ]; then
         export solution_env_host_ip="127.0.0.1"
-        echo $app_vs_project_name: solution_env_host_ip not set, using $solution_env_host_ip
+        echo "  (solution_env_host_ip not set, using $solution_env_host_ip)"
     fi
 
     if [ -z "$solution_env_apppool_identity" ]; then
@@ -40,6 +50,14 @@ function create_web_site_script() {
 
 function create_hosts_section() {
 
+    if ! [ -e $hosts_file ]; then
+        echo "- creating hosts file section: $hosts_file"
+        echo "# BEGIN Solution: $solution_folder, Environment: $solution_environment" > $hosts_file
+        echo "" >> $hosts_file
+    else
+        echo "- appending to hosts file section: $hosts_file"
+    fi
+
     export info="$application_name, $solution_environment, $application_type"
 
     echo "# $info" >> $hosts_file
@@ -55,10 +73,13 @@ function create_hosts_section() {
 function create_deployment_script() {
 
     if ! [ -e $iis_deploy_script ]; then
+        echo "- creating deployment script: $iis_deploy_script"
         echo "#!/bin/sh" >> $iis_deploy_script
         echo '' >> $iis_deploy_script
         echo "set -e" >> $iis_deploy_script
         echo '' >> $iis_deploy_script
+    else
+        echo "- appending to deployment script: $iis_deploy_script"
     fi
 
     artifacts_folder=bin/Debug/netcoreapp3.1/publish
@@ -76,30 +97,71 @@ function create_deployment_script() {
 # Entry point
 
 if [ -z "$1" ]; then
-    echo USAGE: $0 solution_folder application_name application_type - Api/Ui
+    echo USAGE: "$0 clean/create solution_folder application_name Api/Ui"
     echo $0 ERROR: solution_folder not set
     exit 1
 fi
 
+export mode=
+
+if [ $1 = "clean" ]; then
+    export mode=clean
+fi
+
+if [ $1 = "create" ]; then
+    export mode=create
+fi
+
+if [ -z "$solution_environment" ]; then
+    export solution_environment=$ASPNETCORE_ENVIRONMENT
+    echo solution_environment not set, using ASPNETCORE_ENVIRONMENT: $ASPNETCORE_ENVIRONMENT
+fi
+
+export iis_setup_script=./scripts/iis-setup-$solution_environment.bat
+export solution_iis_physical_path_root_dos=$SYSTEMDRIVE\\inetpub\\$solution_environment-$solution_folder.$solution_domain
+export solution_iis_physical_path_root=/C/inetpub/$solution_environment-$solution_folder.$solution_domain
+export iis_deploy_script=./scripts/iis-deploy-$solution_environment
+export hosts_file=./scripts/hosts_$solution_environment
+
+if [ $mode == "clean" ]; then
+    echo "cleaning $solution_environment scripts..."
+    rm -f $iis_setup_script
+    rm -f $iis_deploy_script
+    rm -f $hosts_file
+    exit 0
+fi
+
+if [ -z $mode ]; then
+    echo USAGE: "$0 clean/create solution_folder application_name Api/Ui"
+    echo $0 ERROR: unknown mode: $1
+    exit 1
+fi
+
 if [ -z "$2" ]; then
-    echo USAGE: $0 solution_folder application_name application_type - Api/Ui
-    echo $0 ERROR: application_name not set
+    echo USAGE: "$0 clean/create solution_folder application_name Api/Ui"
+    echo $0 ERROR: solution_folder not set
     exit 1
 fi
 
 if [ -z "$3" ]; then
-    echo USAGE: $0 solution_folder application_name application_type - Api/Ui
+    echo USAGE: "$0 clean/create solution_folder application_name Api/Ui"
+    echo $0 ERROR: application_name not set
+    exit 1
+fi
+
+if [ -z "$4" ]; then
+    echo USAGE: "$0 clean/create solution_folder application_name Api/Ui"
     echo $0 ERROR: application_type not set
     exit 1
 fi
 
-export solution_folder=$1
-export application_name=$2
-export application_type=$3
+export solution_folder=$2
+export application_name=$3
+export application_type=$4
 
 export app_vs_project_name=$application_name$application_type
-export solution_iis_physical_path_root_dos=$SYSTEMDRIVE\\inetpub\\$solution_environment-$solution_folder-$solution_domain
-export solution_iis_physical_path_root=/C/inetpub/$solution_environment-$solution_folder-$solution_domain
+
+echo Solution: $solution_folder - generating scripts for application: $app_vs_project_name in environment: $solution_environment
 
 if [ -z "$iis_setup_script" ]; then
     echo $0 ERROR: iis_setup_script not set
@@ -152,4 +214,4 @@ create_web_site_script
 create_deployment_script
 create_hosts_section
 
-
+echo ""
