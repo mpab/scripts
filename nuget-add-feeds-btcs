@@ -1,0 +1,7 @@
+#!/bin/sh
+
+dotnet nuget remove source BTCS-Dev
+dotnet nuget add source https://bitcoinsuisse.pkgs.visualstudio.com/_packaging/BTCS-Dev/nuget/v3/index.json --name BTCS-Dev --username mial@bitcoinsuisse.com --password vxnujx2qsdum5zvizcezmci5zrr5hrjv2n5uw47lgecvsos7jqza
+
+dotnet nuget remove source BTCS
+dotnet nuget add source https://bitcoinsuisse.pkgs.visualstudio.com/_packaging/BTCS/nuget/v3/index.json --name BTCS --username mial@bitcoinsuisse.com --password vxnujx2qsdum5zvizcezmci5zrr5hrjv2n5uw47lgecvsos7jqza
