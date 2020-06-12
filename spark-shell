@@ -1,0 +1,4 @@
+#!/bin/sh
+
+winpty $SPARK_HOME/bin/spark-shell.cmd $*
+
