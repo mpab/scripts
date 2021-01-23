@@ -1,1 +1,1 @@
-python -m pipenv %*
+winpty python.bat -m pipenv %*

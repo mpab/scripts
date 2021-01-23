@@ -1,0 +1,43 @@
+#!/bin/sh
+
+export install_root=$PWD
+
+echo removing opam
+sudo rm -rf $(which opam)
+rm -rf ~/.opam
+
+curl -sL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh > /tmp/install-opam.sh
+echo | sudo sh /tmp/install-opam.sh --fresh
+curl -sL https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-Linux-x86_64.sh > /tmp/cmake-3.19.3-Linux-x86_64.sh
+sudo sh /tmp/cmake-3.19.3-Linux-x86_64.sh --prefix=/usr/local/ --exclude-subdir --skip-license
+
+sudo apt-get install unzip
+sudo add-apt-repository ppa:tah83/secp256k1 -y
+sudo add-apt-repository -y ppa:avsm/ppa
+sudo apt-get install -y curl build-essential m4 ocaml pkg-config zlib1g-dev libgmp-dev libffi-dev libssl-dev libboost-system-dev libsecp256k1-dev libpcre3-dev
+sudo rm -rf /var/lib/apt/lists/*
+sudo rm -rf /etc/apt/sources.list.d/*
+sudo apt-get update
+sudo apt-get install -y curl build-essential m4 ocaml pkg-config zlib1g-dev libgmp-dev libffi-dev libssl-dev libboost-system-dev libsecp256k1-dev libpcre3-dev --fix-missing
+sudo apt-get install libboost-all-dev
+sudo apt-get upgrade
+
+rm -rf scilla
+git clone -j 8 --recurse-submodules https://github.com/Zilliqa/scilla/
+
+cd $install_root/scilla
+
+opam init --disable-sandboxing --compiler=4.08.1 --yes
+eval $(opam env)
+
+opam switch create scilla --deps-only --with-test --yes ocaml-base-compiler.4.08.1
+eval $(opam env --set-switch)
+
+
+opam install ./scilla.opam --deps-only --with-test
+
+make clean
+make
+make install
+
+eval-runner -gaslimit 10000 -libdir src/stdlib tests/eval/good/let.scilexp
